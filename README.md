@@ -1,5 +1,195 @@
 # TP6 - API REST Node.js, Express et MySQL
 
+# installation instructions
+# Product REST API – LAB 6 & LAB 7
+
+API REST développée avec **Node.js, Express.js et MySQL**.
+
+Ce projet regroupe les fonctionnalités du LAB 6 (gestion des produits et catégories) et du LAB 7 (authentification JWT et sécurisation des routes).
+
+## 1. Technologies utilisées
+
+- Node.js
+- Express.js
+- MySQL / MariaDB
+- mysql2
+- JSON Web Token (JWT)
+- bcrypt
+- express-validator
+- dotenv
+- nodemon
+
+## 2. Prérequis
+
+Avant de commencer, installer :
+
+- [Node.js](https://nodejs.org/)
+- [Git](https://git-scm.com/)
+- [XAMPP](https://www.apachefriends.org/) ou un serveur MySQL
+- [Postman](https://www.postman.com/) pour tester les endpoints
+
+Vérifier les installations :
+
+```bash
+node --version
+npm --version
+git --version
+```
+
+## 3. Cloner le projet
+
+```bash
+git clone https://github.com/YASSBELAB/tp6.git
+```
+
+Accéder au dossier du projet :
+
+```bash
+cd tp6/node-product-api
+```
+
+## 4. Installer les dépendances
+
+```bash
+npm install
+```
+
+Si nodemon n'est pas installé :
+
+```bash
+npm install --save-dev nodemon
+```
+
+## 5. Configurer la base de données MySQL
+
+1. Démarrer Apache et MySQL depuis XAMPP.
+2. Ouvrir phpMyAdmin : http://localhost/phpmyadmin
+3. Sélectionner l'onglet SQL.
+4. Exécuter les scripts SQL du dossier `sql/` :
+
+- `create_database.sql`
+- `seed_data.sql`
+
+La base de données utilisée est `product_api`.
+
+## 6. Configurer les variables d'environnement
+
+Créer un fichier `.env` à la racine du projet :
+
+```env
+PORT=3000
+
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=lab_user
+DB_PASSWORD=your_database_password
+DB_NAME=product_api
+
+JWT_SECRET=your_access_token_secret
+JWT_REFRESH_SECRET=your_refresh_token_secret
+
+JWT_EXPIRES_IN=1h
+JWT_REFRESH_EXPIRES_IN=7d
+
+CORS_ORIGIN=http://localhost:5173
+```
+
+Remplacer les valeurs par les paramètres de votre environnement.
+
+Les secrets JWT doivent être différents et suffisamment longs.
+
+**Important :** Ne jamais partager ou pousser le fichier `.env` sur GitHub.
+
+## 7. Lancer le serveur
+
+Mode développement :
+
+```bash
+npm run dev
+```
+
+Si le script `dev` n'existe pas dans `package.json` :
+
+```bash
+npx nodemon src/server.js
+```
+
+Le serveur sera accessible à :
+
+http://localhost:3000
+
+## 8. Authentification et sécurité
+
+Les principales routes d'authentification sont :
+
+| Méthode | Endpoint | Description |
+|---|---|---|
+| POST | `/api/auth/register` | Inscription |
+| POST | `/api/auth/login` | Connexion |
+| POST | `/api/auth/refresh` | Renouvellement du token |
+| GET | `/api/auth/me` | Consulter son profil |
+| DELETE | `/api/auth/me` | Supprimer son compte |
+
+L'API utilise :
+
+- bcrypt pour le hachage des mots de passe.
+- JWT pour l'authentification.
+- Refresh tokens pour renouveler les access tokens.
+- Middleware `authenticate` pour protéger les routes.
+- Middleware `authorize` pour gérer les rôles USER et ADMIN.
+- Journalisation des tentatives de connexion échouées.
+
+## 9. Tester l'API
+
+Utiliser Postman avec l'adresse :
+
+```text
+http://localhost:3000
+```
+
+Pour les routes protégées, ajouter dans Authorization :
+
+```text
+Type: Bearer Token
+Token: YOUR_ACCESS_TOKEN
+```
+
+## 10. Structure du projet
+
+```text
+node-product-api/
+├── sql/
+│   ├── create_database.sql
+│   └── seed_data.sql
+├── src/
+│   ├── config/
+│   │   └── db.js
+│   ├── controllers/
+│   ├── middlewares/
+│   ├── repositories/
+│   ├── routes/
+│   ├── services/
+│   ├── utils/
+│   └── server.js
+├── .env
+├── .gitignore
+├── package.json
+├── package-lock.json
+└── README.md
+```
+
+## 11. Dépôt GitHub
+
+Repository : https://github.com/YASSBELAB/tp6
+
+Pour envoyer les modifications :
+
+```bash
+git add .
+git commit -m "Update project documentation"
+git push origin main
+```
+
 Migration de l'API REST TP5 vers une base de données MySQL avec une architecture en couches.
 
 
