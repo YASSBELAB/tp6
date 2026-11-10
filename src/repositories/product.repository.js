@@ -1,55 +1,145 @@
 
-let products = [
-  { id: 1, name: 'Laptop Pro', price: 1200.50, stock: 15 },
-  { id: 2, name: 'Souris Sans Fil', price: 25.99, stock: 50 },
-  { id: 3, name: 'Clavier Mécanique', price: 75.00, stock: 30 }
-];
+import pool from '../config/db.js';
 
 export const productRepository = {
-  findAll: async (search = '') => {
-    return products.filter(product =>
-      product.name.toLowerCase().includes(search.toLowerCase())
-    );
-  },
 
-  findById: async (id) => products.find(p => p.id === id),
+    // Get all products, with optional name search
+    findAll: async (search = '') => {
+        const [rows] = await pool.execute(
+            'SELECT * FROM products WHERE name LIKE ?',
+            [`%${search}%`]
+        );
 
-  create: async (productData) => {
-    const newId = products.length > 0
-      ? products[products.length - 1].id + 1
-      : 1;
+        return rows;
+    },
 
-    const newProduct = { id: newId, ...productData };
-    products.push(newProduct);
-    return newProduct;
-  },
+    // Get product by ID
+    findById: async (id) => {
+        const [rows] = await pool.execute(
+            'SELECT * FROM products WHERE id = ?',
+            [id]
+        );
 
-  update: async (id, productData) => {
-    const index = products.findIndex(p => p.id === id);
+        return rows[0] || null;
+    },
 
-    if (index === -1) return null;
+    // Create product
+    create: async (productData) => {
+        const {
+            name,
+            price,
+            category_id,
+            stock = 0
+        } = productData;
 
-    products[index] = { id, ...productData };
-    return products[index];
-  },
+        const [result] = await pool.execute(
+            `INSERT INTO products (name, price, category_id, stock)
+             VALUES (?, ?, ?, ?)`,
+            [name, price, category_id ?? null, stock]
+        );
 
-  // Update only the stock quantity
-  updateStock: async (id, stock) => {
-    const product = products.find(p => p.id === id);
+        return await productRepository.findById(result.insertId);
+    },
 
-    if (!product) return null;
+    // Update product
+    update: async (id, productData) => {
+        const {
+            name,
+            price,
+            category_id,
+            stock
+        } = productData;
 
-    product.stock = stock;
+        const [result] = await pool.execute(
+            `UPDATE products
+             SET name = ?, price = ?, category_id = ?, stock = ?
+             WHERE id = ?`,
+            [name, price, category_id ?? null, stock ?? 0, id]
+        );
 
-    return product;
-  },
+        if (result.affectedRows === 0) {
+            return null;
+        }
 
-  delete: async (id) => {
-    const index = products.findIndex(p => p.id === id);
+        return await productRepository.findById(id);
+    },
 
-    if (index === -1) return false;
+    // Update only stock quantity
+    updateStock: async (id, stock) => {
+        const [result] = await pool.execute(
+            'UPDATE products SET stock = ? WHERE id = ?',
+            [stock, id]
+        );
 
-    products.splice(index, 1);
-    return true;
-  }
+        if (result.affectedRows === 0) {
+            return null;
+        }
+
+        return await productRepository.findById(id);
+    },
+
+    // Delete product
+    delete: async (id) => {
+        const [result] = await pool.execute(
+            'DELETE FROM products WHERE id = ?',
+            [id]
+        );
+
+        return result.affectedRows > 0;
+    },
+
+    // Advanced search, filtering, sorting and pagination
+    search: async ({
+        name,
+        minPrice,
+        maxPrice,
+        categoryId,
+        limit = 10,
+        offset = 0,
+        sort = 'name'
+    }) => {
+        let sql = 'SELECT * FROM products WHERE 1=1';
+        const params = [];
+
+        // Filter by name
+        if (name) {
+            sql += ' AND name LIKE ?';
+            params.push(`%${name}%`);
+        }
+
+        // Filter by minimum price
+        if (minPrice !== undefined && minPrice !== '') {
+            sql += ' AND price >= ?';
+            params.push(minPrice);
+        }
+
+        // Filter by maximum price
+        if (maxPrice !== undefined && maxPrice !== '') {
+            sql += ' AND price <= ?';
+            params.push(maxPrice);
+        }
+
+        // Filter by category
+        if (categoryId !== undefined && categoryId !== '') {
+            sql += ' AND category_id = ?';
+            params.push(categoryId);
+        }
+
+        // Allow only specific sorting columns
+        const allowedSort = ['name', 'price', 'id'];
+        const sortColumn = allowedSort.includes(sort)
+            ? sort
+            : 'name';
+
+        sql += ` ORDER BY ${sortColumn} LIMIT ? OFFSET ?`;
+
+        params.push(
+            Math.max(1, parseInt(limit, 10) || 10),
+            Math.max(0, parseInt(offset, 10) || 0)
+        );
+
+        const [rows] = await pool.execute(sql, params);
+
+        return rows;
+    }
 };

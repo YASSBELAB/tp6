@@ -1,31 +1,34 @@
 
 import express from 'express';
-import dotenv from 'dotenv';
-import productRoutes from './routes/product.routes.js';
-import { errorHandler } from './middlewares/error.middleware.js';
+import 'dotenv/config';
 
-dotenv.config();
+import productRoutes from './routes/product.routes.js';
+import categoryRoutes from './routes/category.routes.js';
+import { errorHandler } from './middlewares/error.middleware.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware pour parser le JSON
+// JSON middleware
 app.use(express.json());
 
-// Route de test
+// Test route
 app.get('/', (req, res) => {
   res.json({
-    message: 'Bienvenue sur l\'API REST Product - LAB 5'
+    message: 'Welcome to Product REST API - TP6'
   });
 });
 
-// Routes des produits
+// Product routes
 app.use('/api/products', productRoutes);
 
-// Middleware global de gestion des erreurs
+// Category routes
+app.use('/api/categories', categoryRoutes);
+
+// Global error handler (must be after routes)
 app.use(errorHandler);
 
-// Démarrage du serveur
+// Start server
 app.listen(PORT, () => {
-  console.log(`Serveur démarré sur le port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
