@@ -1,34 +1,47 @@
 
 import express from 'express';
+import cors from 'cors';
 import 'dotenv/config';
 
 import productRoutes from './routes/product.routes.js';
 import categoryRoutes from './routes/category.routes.js';
+import authRoutes from './routes/authRoutes.js';
+
+import { authenticate } from './middlewares/auth.js';
 import { errorHandler } from './middlewares/error.middleware.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// JSON middleware
+// Global middleware
+app.use(cors({
+    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(express.json());
 
 // Test route
 app.get('/', (req, res) => {
-  res.json({
-    message: 'Welcome to Product REST API - TP6'
-  });
+    res.json({
+        message: 'Welcome to Product REST API - LAB 7'
+    });
 });
 
-// Product routes
-app.use('/api/products', productRoutes);
+// LAB 6: Product routes (authentication required)
+app.use('/api/products', authenticate, productRoutes);
 
-// Category routes
+// LAB 6: Category routes
 app.use('/api/categories', categoryRoutes);
 
-// Global error handler (must be after routes)
+// LAB 7: Authentication routes
+app.use('/api/auth', authRoutes);
+
+// Global error handler (must be last)
 app.use(errorHandler);
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+    console.log(`Server running on port ${PORT}`);
 });

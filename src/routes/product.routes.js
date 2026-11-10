@@ -3,45 +3,55 @@ import { Router } from 'express';
 
 import { productController } from '../controllers/product.controller.js';
 import { validateProduct } from '../middlewares/validation.js';
+import { authorize } from '../middlewares/auth.js';
 
 const router = Router();
 
-// GET: Advanced search (must be before /:id)
+// GET: All authenticated users
 router.get('/search', productController.search);
-
-// GET: Retrieve all products
 router.get('/', productController.getAll);
-
-// GET: Retrieve product by ID
 router.get('/:id', productController.getById);
 
-// POST: Create product with category (transaction)
+// POST: Admin only
 router.post(
     '/with-category',
+    authorize('ADMIN'),
     productController.createWithCategory
 );
 
-// POST: Create product with existing category ID
 router.post(
     '/',
+    authorize('ADMIN'),
     validateProduct,
     productController.create
 );
 
-// PUT: Complete product update
+// PUT: Admin only
 router.put(
     '/:id',
+    authorize('ADMIN'),
     validateProduct,
     productController.update
 );
 
-// PATCH: Update only product stock
-router.patch('/:id/stock', productController.updateStock);
+// PATCH: Admin only
+router.patch(
+    '/:id/stock',
+    authorize('ADMIN'),
+    productController.updateStock
+);
 
-// PATCH: Partial product update
-router.patch('/:id', productController.patch);
+router.patch(
+    '/:id',
+    authorize('ADMIN'),
+    productController.patch
+);
 
-// DELETE: Remove product
-router.delete('/:id', productController.remove);
+// DELETE: Admin only
+router.delete(
+    '/:id',
+    authorize('ADMIN'),
+    productController.remove
+);
 
 export default router;
