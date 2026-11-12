@@ -6,6 +6,9 @@ const JWT_SECRET = process.env.JWT_SECRET;
 
 // AUTHENTICATE
 export const authenticate = async (req, res, next) => {
+    if (req.apiKeyAuthenticated && req.user) {
+        return next();
+    }
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
